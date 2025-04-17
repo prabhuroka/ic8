@@ -1,3 +1,7 @@
+sshagent(['correct-credential-id']) {
+    sh 'ssh -o StrictHostKeyChecking=no ec2-user@54.165.233.67'
+}
+
 pipeline {
     agent any
 
@@ -6,7 +10,9 @@ pipeline {
             steps {
                 sshagent(['ubuntu']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@54.165.233.67 <<EOF
+                    
+                    sshagent(['correct-credential-id']) {
+                    sh 'ssh -o StrictHostKeyChecking=no ec2-user@54.165.233.67'} <<EOF
 if [ ! -d "repo" ]; then
     git clone https://github.com/prabhuroka/ic8 repo
 else
