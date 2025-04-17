@@ -1,7 +1,3 @@
-sshagent(['correct-credential-id']) {
-    sh 'ssh -o StrictHostKeyChecking=no ec2-user@54.165.233.67'
-}
-
 pipeline {
     agent any
 
@@ -10,50 +6,46 @@ pipeline {
             steps {
                 sshagent(['ubuntu']) {
                     sh '''
-                    
-                    sshagent(['correct-credential-id']) {
-                    sh 'ssh -o StrictHostKeyChecking=no ec2-user@54.165.233.67'} <<EOF
-if [ ! -d "repo" ]; then
-    git clone https://github.com/prabhuroka/ic8 repo
-else
-    echo "Repository already exists."
-    cd repo
-    git pull
-fi
-EOF
+                        ssh -o StrictHostKeyChecking=no ubuntu@54.165.233.67 '
+                            if [ ! -d "repo" ]; then
+                                git clone https://github.com/prabhuroka/ic8 repo
+                            else
+                                echo "Repository already exists."
+                                cd repo
+                                git pull
+                            fi
+                        '
                     '''
                 }
             }
         }
-        
+
         stage('Install Dependencies') {
             steps {
                 sshagent(['ubuntu']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@54.165.233.67 <<EOF
-sudo apt update
-sudo apt install -y python3-flask
-sudo apt install -y python3-flask-cors
-EOF
+                        ssh -o StrictHostKeyChecking=no ubuntu@54.165.233.67 '
+                            sudo apt update
+                            sudo apt install -y python3-flask python3-flask-cors
+                        '
                     '''
                 }
             }
         }
-        
+
         stage('Build and Run') {
             steps {
                 sshagent(['ubuntu']) {
                     sh '''
-                    ssh -o StrictHostKeyChecking=no ubuntu@54.165.233.67 <<EOF
-cd repo
+                        ssh -o StrictHostKeyChecking=no ubuntu@54.165.233.67 '
+                            cd repo
 
-# Stop any running Flask app instance
-sudo pkill -f "app.py" || echo "Flask app is not running."
+                            # Stop existing Flask app
+                            sudo pkill -f "app.py" || echo "No app to stop."
 
-# Start the Flask app in the background
-sudo nohup python3 app.py > nohup.out 2>&1 &
-disown
-EOF
+                            # Start the app in background
+                            nohup python3 app.py > nohup.out 2>&1 &
+                        '
                     '''
                 }
             }
